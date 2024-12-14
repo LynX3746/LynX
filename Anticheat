@@ -1,0 +1,78 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local function detectSpeedHack(player)
+    local character = player.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        local speedLimit = 16
+        if humanoid.WalkSpeed > speedLimit then
+            warn(player.Name .. " is moving too fast! Possible speed hack detected.")
+            player:Kick("Speed hack detected!")
+        end
+    end
+end
+
+local function detectTeleportation(player)
+    local character = player.Character
+    if not character then return end
+    
+    local lastPosition = character.HumanoidRootPart.Position
+    local teleportLimit = 100
+    
+    RunService.Heartbeat:Connect(function()
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        
+        local newPosition = character.HumanoidRootPart.Position
+        local distanceMoved = (lastPosition - newPosition).Magnitude
+        
+        if distanceMoved > teleportLimit then
+            warn(player.Name .. " has teleported! Possible exploit detected.")
+            player:Kick("Teleportation exploit detected!")
+        end
+        lastPosition = newPosition
+    end)
+end
+
+local function detectHealthCheat(player)
+    local character = player.Character
+    if not character then return end
+    
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.HealthChanged:Connect(function()
+            if humanoid.Health > humanoid.MaxHealth then
+                warn(player.Name .. " has invalid health. Possible health cheat detected.")
+                player:Kick("Health cheat detected!")
+            end
+        end)
+    end
+end
+
+local function detectExploits(player)
+    local function checkPlayerInventory()
+        local backpack = player.Backpack
+        for _, item in ipairs(backpack:GetChildren()) do
+            if item.Name == "SuspiciousTool" then
+                warn(player.Name .. " has a suspicious tool! Possible exploit detected.")
+                player:Kick("Suspicious tool detected!")
+            end
+        end
+    end
+    
+    while true do
+        wait(5)
+        checkPlayerInventory()
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        detectSpeedHack(player)
+        detectTeleportation(player)
+        detectHealthCheat(player)
+        detectExploits(player)
+    end)
+end)
